@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+import { Tokens } from "@/lib/services/types/auth";
+
 export type AuthState = {
   accessToken?: string;
   refreshToken?: string;
@@ -8,9 +10,8 @@ export type AuthState = {
 };
 
 export type AuthActions = {
-  authenticate: () => void;
-  unauthenticate: () => void;
-  refresh: () => void;
+  authenticate: (tokens: Tokens) => Promise<void>;
+  unauthenticate: () => Promise<void>;
 };
 
 export const useAuth = create(
@@ -19,9 +20,20 @@ export const useAuth = create(
       accessToken: undefined,
       refeshToken: undefined,
       expiresAt: undefined,
-      authenticate: () => {},
-      unauthenticate: () => {},
-      refresh: () => {},
+      authenticate: async (tokens: Tokens) => {
+        set({
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt: Date.now() + tokens.expiresIn * 1000,
+        });
+      },
+      unauthenticate: async () => {
+        set({
+          accessToken: undefined,
+          refreshToken: undefined,
+          expiresAt: undefined,
+        });
+      },
     }),
     {
       name: "auth-state",
